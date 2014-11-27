@@ -1,0 +1,57 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
+    font-size: 12px;
+    background-color: lightgrey;
+}
+
+#wrapper{
+    width: 95%;
+    margin: 0 auto;
+}
+
+#header {
+    width: 100%;
+    height: 100px;
+    background-color: cornflowerblue;
+}
+
+#content{
+    width: 100%;
+    height: 400px;
+}
+
+#results-box{
+    display: inline-block;
+    width: 75%;
+    background-color: darkgray;
+    height: inherit;
+}
+
+#sidebar {
+    display: inline-block;
+    float: right;
+    width: 25%;
+    height: inherit;
+    background-color: cadetblue;
+}
+
+.filter-row {
+    width: 100%;
+    display: inline-block;
+    padding: 5px 0 5px 0;
+}
+
+.filter-row * {
+    margin-left: 10px;
+}
+
+#footer {
+    width: 100%;
+    height: 100px;
+    background-color: chocolate;
+}

@@ -1,2 +1,9 @@
 # ve folder
 ve/
+
+# all . files except .gitignore
+.*
+!.gitignore
+
+# ingore sqlite3 files
+*.sqlite3
