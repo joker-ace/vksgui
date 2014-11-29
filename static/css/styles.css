@@ -9,7 +9,7 @@ body {
     background-color: lightgrey;
 }
 
-#wrapper{
+#wrapper {
     width: 95%;
     margin: 0 auto;
 }
@@ -20,12 +20,12 @@ body {
     background-color: cornflowerblue;
 }
 
-#content{
+#content {
     width: 100%;
     height: 400px;
 }
 
-#results-box{
+#results-box {
     display: inline-block;
     width: 75%;
     background-color: darkgray;
@@ -43,11 +43,43 @@ body {
 .filter-row {
     width: 100%;
     display: inline-block;
-    padding: 5px 0 5px 0;
+    padding: 10px 0 0 0;
 }
 
-.filter-row * {
-    margin-left: 10px;
+.filter-row input, select, label {
+    width: 75%;
+    display: block;
+    margin: 0 auto;
+}
+
+.filter-row #btn-clear {
+    width: 15px;
+    height: 15px;
+    display: block;
+    float: right;
+    position: relative;
+    right: 12.4%;
+    bottom: 17px;
+}
+
+.filter-row #cities-list {
+    width: 71%;
+    display: block;
+    margin: 0 auto;
+    background-color: aliceblue;
+    color: cornflowerblue;
+    overflow-y: auto;
+    max-height: 315px;
+    height: auto;
+}
+
+#cities-list .city-row {
+    border-bottom: 1px solid gainsboro;
+}
+
+#cities-list .city-row:hover{
+    color: aliceblue;
+    background-color: cornflowerblue;
 }
 
 #footer {

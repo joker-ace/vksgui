@@ -1,10 +1,11 @@
 # coding=utf-8
-import urllib
-import urllib2
+import requests
+import json
 
 from django.views.generic import View
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.conf import settings
 
 from utils import json_response
 
@@ -21,25 +22,29 @@ class Index(View):
                                   RequestContext(request))
 
 
-class VKSearch(View):
+class VKGetCities(View):
     def post(self, request, *args, **kwargs):
-        country = int(request.POST.get('country', 0))
-        if country == 0:
+        countryId = int(request.POST.get('country', 0))
+        if countryId == 0:
             return 0
 
-        url = 'https://vk.com/select_ajax.php'
         data = {
-            'act': 'a_get_country_info',
-            'fields': 1,
-            'country': country
-        }
-        headers = {
-            'x-requested-with': 'XMLHttpRequest'
+            'country_id': countryId,
+            'v': settings.API_VERSION,
+            'access_token': settings.VK_API_TOKEN
         }
 
-        data = urllib.urlencode(data)
-        vk_request = urllib2.Request(url, data, headers)
-        vk_response = urllib2.urlopen(vk_request)
-        data = vk_response.read().decode('cp1251')
-        data = eval(data.replace('<b>', '').replace('<\\/b>', ''))
-        return json_response(data['cities'])
+        query = request.POST.get('query', None)
+        if query:
+            data['q'] = query
+
+        url = settings.GET_CITIES_URL
+        r = requests.post(url, data=data)
+
+        cities_data = r.json()
+        items = []
+
+        if u'response' in cities_data:
+            items = cities_data[u'response']['items']
+
+        return json_response(items)

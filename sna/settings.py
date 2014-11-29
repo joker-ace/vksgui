@@ -94,3 +94,15 @@ STATICFILES_DIRS = (
 TEMPLATE_DIRS = (
     os.path.join(BASE_DIR, 'templates'),
 )
+
+# settings for vk API
+
+API_VERSION = '5.27'
+
+VK_API_HOST = 'https://api.vk.com/method/'
+
+SEARCH_URL = VK_API_HOST + 'users.search'
+GROUP_INFO_URL = VK_API_HOST + 'groups.getMembers'
+GET_CITIES_URL = VK_API_HOST + 'database.getCities'
+
+VK_API_TOKEN = 'b65be4fe7d116e8f74d2fb85068eee6dbe4d66381275e887cd8e844870442623ac34538b16d6f93938ceb'
