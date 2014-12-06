@@ -22,11 +22,35 @@ class Index(View):
                                   RequestContext(request))
 
 
+class VKGetGroups(View):
+    def post(self, request, *args, **kwargs):
+        query = request.POST.get('query', '')
+        if query == '':
+            json_response(0)
+
+        group_type = request.POST.get('type', '')
+
+        data = {
+            'v': settings.API_VERSION,
+            'access_token': settings.VK_API_TOKEN,
+            'q': query,
+            'count': 1000,
+            'type': group_type
+        }
+
+        url = settings.GET_GROUPS_URL
+        r = requests.post(url, data=data)
+        groups_data = r.json()
+        if u'response' in groups_data:
+            return json_response(groups_data[u'response']['items'])
+
+        return json_response(0)
+
 class VKGetCities(View):
     def post(self, request, *args, **kwargs):
         countryId = int(request.POST.get('country', 0))
         if countryId == 0:
-            return 0
+            return json_response(0)
 
         data = {
             'country_id': countryId,

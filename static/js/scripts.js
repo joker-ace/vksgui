@@ -3,11 +3,14 @@ var timer = null;
 var doneTypingInterval = 1000;
 var countryId = 0;
 var cityId = 0;
+var groupId = 0;
 
 // possible cities request processing flag
 pcrp = false;
+pgrp = false;
 
 $(document).ready(function () {
+
     // countries list changed handler
     $("#country").change(function () {
         countryId = parseInt($(this).val());
@@ -83,8 +86,98 @@ $(document).ready(function () {
         }
     });
 
+    $('.sidebar-header').click(function() {
+        $('.sidebar-header').removeClass('selected');
+        $(this).addClass("selected");
+
+        if ($(this).attr('id') == "groups") {
+            $("#groups-filter-form").show();
+            $("#common-filter-form").hide();
+        } else if ($(this).attr('id') == "common") {
+            $("#groups-filter-form").hide();
+            $("#common-filter-form").show();
+        }
+    });
+
+    $('#group_name').keyup(groupKeyUp).keydown(groupKeyDown);
+
 });
 
+function groupKeyDown() {
+    clearTimeout(timer);
+}
+
+function groupKeyUp() {
+    if ($(this).val().length < 3) {
+        return;
+    }
+    clearTimeout(timer);
+    timer = setTimeout(getPossibleGroups, doneTypingInterval);
+}
+
+function getPossibleGroups() {
+    if (pgrp) return;
+    pgrp = true;
+    var query = $("#group_name").val();
+    if (query === '') return;
+    var type = $("#group_type").val();
+    $.post(
+        'getvkgroups/',
+        {
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
+            query: query,
+            type: type
+        },
+
+        function (data) {
+            var outerDiv = $('#groups-list');
+
+            if (outerDiv.length) {
+                outerDiv.html('');
+            }
+            else {
+                outerDiv = $('<div>', {
+                    'id': 'groups-list'
+                });
+            }
+
+            data.forEach(function (group, index, array) {
+
+                var innerDiv = $('<div>', {
+                    'class': 'group-row'
+                });
+
+                innerDiv.append($('<span>', {
+                    'text': group['id']
+                }).hide());
+
+                innerDiv.append(
+                    $('<img>', {
+                        'alt': 'Image',
+                        'src': group['photo_50']
+                    })
+                );
+
+                innerDiv.append(
+                    $('<div>', {
+                        'class': 'name',
+                        'text': group['name']
+                    })
+                );
+                outerDiv.append(innerDiv);
+            });
+            $("#group_name").parent().append(outerDiv);
+
+            $(".group-row").click(function () {
+                $("#group_name").val($(this).find(".name").text());
+                groupId = parseInt($(this).find("span").text());
+                $("#group_id").val($(this).find("span").text());
+                outerDiv.html('');
+            });
+        }
+    );
+    pgrp = false;
+}
 
 function cityKeyDown() {
     clearTimeout(timer);
@@ -97,7 +190,6 @@ function cityKeyUp() {
     clearTimeout(timer);
     timer = setTimeout(getPossibleCities, doneTypingInterval);
 }
-
 
 function getPossibleCities() {
     if (pcrp) return;

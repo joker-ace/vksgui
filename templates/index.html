@@ -22,24 +22,65 @@
 
         </div>
         <div id="sidebar">
-            <form action="" method="post">
-                <div class="filter-row">
-                    <label for="country">Country</label>
-                    <select id="country">
-                        <option value="0" selected="selected">Select country
-                        </option>
-                        {% for k, v in countries.items %}
-                            <option value="{{ k }}">{{ v }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="sidebar-header selected" id="common">Общий</div>
+            <div class="sidebar-header" id="groups">Группы</div>
 
-                <div class="filter-row">
-                    <label for="city">City</label>
-                    <select id="city"></select>
-                </div>
-                {% csrf_token %}
-            </form>
+            <div id="common-filter-form">
+                <form action="" method="post">
+                    <div class="filter-row">
+                        <label for="country">Country</label>
+                        <select id="country">
+                            <option value="0" selected="selected">Select
+                                country
+                            </option>
+                            {% for k, v in countries.items %}
+                                <option value="{{ k }}">{{ v }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-row">
+                        <label for="city">City</label>
+                        <select id="city"></select>
+                    </div>
+                    {% csrf_token %}
+                </form>
+            </div>
+
+            <div id="groups-filter-form" style="display: none">
+                <form action="" method="post">
+                    <div class="filter-row">
+                        <label for="group_type">Тип группы</label>
+                        <select id="group_type">
+                            <option value="" selected="selected">-- Выберите тип группы --</option>
+                            <option value="group">Группа</option>
+                            <option value="page">Страница</option>
+                            <option value="event">Событие</option>
+                        </select>
+                    </div>
+                    <div class="filter-row">
+                        <label for="group_name">Название группы</label>
+                        <input type="text" name="group_name" id="group_name" value=""/>
+                    </div>
+
+                    <div class="filter-row">
+                        <label>или</label>
+                        <br/>
+                    </div>
+
+                    <div class="filter-row">
+                        <label for="group_id">Идентификатор или короткое имя</label>
+                        <input type="text" name="group_id" id="group_id"
+                               value=""/>
+                    </div>
+
+                    <div class="filter-row">
+                        <input type="button" id="start" name="start" value="Рок-н-рол" />
+                    </div>
+
+                </form>
+            </div>
+
         </div>
 
     </div>

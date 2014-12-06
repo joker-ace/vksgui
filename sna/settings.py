@@ -104,5 +104,6 @@ VK_API_HOST = 'https://api.vk.com/method/'
 SEARCH_URL = VK_API_HOST + 'users.search'
 GROUP_INFO_URL = VK_API_HOST + 'groups.getMembers'
 GET_CITIES_URL = VK_API_HOST + 'database.getCities'
+GET_GROUPS_URL = VK_API_HOST + 'groups.search'
 
-VK_API_TOKEN = 'b65be4fe7d116e8f74d2fb85068eee6dbe4d66381275e887cd8e844870442623ac34538b16d6f93938ceb'
+VK_API_TOKEN = 'bab1b88d15450fc556fbab9e841908b752eb80a91b54c071b2f455866ce4b010e72971a258421b054de80'
