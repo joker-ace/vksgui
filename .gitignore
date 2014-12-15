@@ -1,4 +1,4 @@
-# ve folder
+# virtual enviroment folder
 ve/
 
 # all . files except .gitignore
@@ -7,3 +7,6 @@ ve/
 
 # ingore sqlite3 files
 *.sqlite3
+
+# ignore compiled python files
+*.pyc

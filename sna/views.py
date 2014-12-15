@@ -1,18 +1,17 @@
 # coding=utf-8
 import requests
-import json
-
 from django.views.generic import View
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.conf import settings
 
 from utils import json_response
+from sna.celery import app
+import sna.tasks
 
 
 class Index(View):
     def get(self, request, *args, **kwargs):
-
         countries = {
             '1': 'Россия',
             '2': 'Украина'
@@ -46,6 +45,7 @@ class VKGetGroups(View):
 
         return json_response(0)
 
+
 class VKGetCities(View):
     def post(self, request, *args, **kwargs):
         countryId = int(request.POST.get('country', 0))
@@ -72,3 +72,44 @@ class VKGetCities(View):
             items = cities_data[u'response']['items']
 
         return json_response(items)
+
+
+class VKGroupParser(View):
+    def post(self, request, *args, **kwargs):
+        code = 1
+        gid = request.POST.get('gid', None)
+        if gid:
+            request.session['pgtid'] = sna.tasks.parse_group.delay(gid).id
+            request.session['gid'] = gid
+        else:
+            code = 0
+        return json_response(code)
+
+
+class VKGroupParserChecker(View):
+    def post(self, request, *args, **kwargs):
+        tid = request.session.get('pgtid', None)
+        if tid:
+            result = app.AsyncResult(tid)
+            return json_response(result.ready())
+        return json_response(-1)
+
+
+class VKGetParsedMembersCount(View):
+    def post(self, request, *args, **kwargs):
+        tid = request.session.get('pgtid', None)
+        if tid:
+            del request.session['pgtid']
+            result = app.AsyncResult(tid)
+            request.session['pgmftid'] = sna.tasks.parse_group_members_friends.delay(request.session['gid']).id
+            return json_response(result.get())
+        return json_response(-1)
+
+
+class VKGroupMembersFriendsChecker(View):
+    def post(self, request, *args, **kwargs):
+        tid = request.session.get('pgmftid', None)
+        if tid:
+            result = app.AsyncResult(tid)
+            return json_response(result.ready())
+        return json_response(-1)

@@ -6,12 +6,98 @@ var cityId = 0;
 var groupId = 0;
 
 // possible cities request processing flag
-pcrp = false;
-pgrp = false;
+var pcrp = false;
+var pgrp = false;
+
+var intervalId = null;
+
+
+function statusCheckerForGroupMembersFriendsParser() {
+    intervalId = setInterval(function () {
+        $.post(
+            'checkgroupmembersfriendsparsingstatus/',
+            {
+                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            function (data) {
+                if (data == -1) {
+                    console.log('Error!');
+                } else if (data === false) {
+                    console.log('Pending!');
+                } else if (data === true) {
+                    console.log('Ready!');
+                    clearInterval(intervalId);
+                    getParsedMembersCount();
+                }
+            }
+        );
+    }, 5000);
+}
+
+
+function getParsedMembersCount() {
+
+    $.post(
+        'getparsedmemberscount/',
+        {
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+        },
+        function (data) {
+            var rb = $("#results-box");
+            $("#progress").remove();
+            rb.append('<p>Parsed:' + data + '</p>');
+            rb.append('<p>Parsing friends of group members</p>');
+            rb.append('<img src="/static/img/ajax-loader.gif" alt="" id="progress"/>');
+        }
+    );
+}
+
+function statusCheckerForGroupParsing() {
+    intervalId = setInterval(function () {
+        $.post(
+            'checkgroupparsingstatus/',
+            {
+                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            function (data) {
+                if (data == -1) {
+                    console.log('Error!');
+                } else if (data === false) {
+                    console.log('Pending!');
+                } else if (data === true) {
+                    console.log('Ready!');
+                    clearInterval(intervalId);
+                    getParsedMembersCount();
+                }
+            }
+        );
+    }, 1000);
+}
 
 $(document).ready(function () {
 
-    // countries list changed handler
+    $("#start").click(function () {
+
+        $.post(
+            'rungroupparsing/',
+            {
+                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
+                gid: $("#group_id").val()
+            },
+            function (data) {
+                if (data === 1) {
+                    statusCheckerForGroupParsing();
+                    var rb = $("#results-box");
+                    rb.append('<p>Parsing group members, please wait</p>');
+                    rb.append('<img src="/static/img/ajax-loader.gif" alt="" id="progress"/>');
+                    return;
+                }
+                alert('Bad request');
+            }
+        );
+    });
+
+// countries list changed handler
     $("#country").change(function () {
         countryId = parseInt($(this).val());
         if (countryId == 0) {
@@ -47,7 +133,7 @@ $(document).ready(function () {
         );
     });
 
-    // cities list changed handler
+// cities list changed handler
     $("#city").change(function () {
         cityId = parseInt($(this).val());
         if (cityId == -1) {
@@ -86,7 +172,7 @@ $(document).ready(function () {
         }
     });
 
-    $('.sidebar-header').click(function() {
+    $('.sidebar-header').click(function () {
         $('.sidebar-header').removeClass('selected');
         $(this).addClass("selected");
 
@@ -101,7 +187,8 @@ $(document).ready(function () {
 
     $('#group_name').keyup(groupKeyUp).keydown(groupKeyDown);
 
-});
+})
+;
 
 function groupKeyDown() {
     clearTimeout(timer);
@@ -227,22 +314,22 @@ function getPossibleCities() {
                     'text': city['id']
                 }).hide());
 
-                props.forEach(function(property, index, array) {
-                   if (city.hasOwnProperty(property)){
-                       innerDiv.append(
-                           $('<div>', {
-                               'class': property,
-                               'text': city[property]
-                           })
-                       );
-                   }
+                props.forEach(function (property, index, array) {
+                    if (city.hasOwnProperty(property)) {
+                        innerDiv.append(
+                            $('<div>', {
+                                'class': property,
+                                'text': city[property]
+                            })
+                        );
+                    }
 
                 });
                 outerDiv.append(innerDiv);
             });
             $("#city").parent().append(outerDiv);
 
-            $(".city-row").click(function(){
+            $(".city-row").click(function () {
                 $("#city_custom").val($(this).find(".title").text());
                 cityId = parseInt($(this).find("span").text());
                 outerDiv.html('');

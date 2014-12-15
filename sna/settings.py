@@ -1,4 +1,7 @@
 # coding=utf-8
+
+from __future__ import absolute_import
+
 """
 Django settings for sna project.
 
@@ -13,6 +16,17 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
+MEMBERS_FILES_DIR = os.path.join(BASE_DIR, 'members')
+
+# Celery settings
+
+BROKER_URL = 'amqp://guest:guest@localhost//'
+
+#: Only add pickle to this list if your broker is secured
+#: from unwanted access (see userguide/security.html)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
@@ -37,6 +51,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'djcelery'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -97,13 +112,21 @@ TEMPLATE_DIRS = (
 
 # settings for vk API
 
-API_VERSION = '5.27'
-
 VK_API_HOST = 'https://api.vk.com/method/'
 
 SEARCH_URL = VK_API_HOST + 'users.search'
-GROUP_INFO_URL = VK_API_HOST + 'groups.getMembers'
+GET_GROUP_MEMBERS_URL = VK_API_HOST + 'groups.getMembers'
 GET_CITIES_URL = VK_API_HOST + 'database.getCities'
 GET_GROUPS_URL = VK_API_HOST + 'groups.search'
+GET_FRIENDS_OF_USER_URL = VK_API_HOST + 'friends.get'
+EXECUTE_URL = VK_API_HOST + 'execute'
 
-VK_API_TOKEN = 'bab1b88d15450fc556fbab9e841908b752eb80a91b54c071b2f455866ce4b010e72971a258421b054de80'
+
+
+VK_API_TOKEN = 'dfff2f6544f422f59b1d524d8cb12d6cee1072acbd1760a74a64dee1093cb7cf02c7fc5c6ffa284533ddb'
+API_VERSION = '5.27'
+
+REQUEST_DATA = {
+    'v': API_VERSION,
+    'access_token': VK_API_TOKEN
+}

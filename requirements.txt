@@ -1,3 +1,5 @@
 django
 django-jsonify
 requests
+pymongo
+django-celery
