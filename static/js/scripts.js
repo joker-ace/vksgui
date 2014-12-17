@@ -15,11 +15,136 @@ var app = {
     }
 };
 
+function getAttackResults() {
+    $.post(
+        'get_attack_results/',
+        {
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+        },
+        function (targets) {
+            var div = $('<div>', {
+                'id': 'targets'
+            });
+
+            targets.forEach(function (t) {
+                var tb = $('<div>', {
+                    'class': 'target-block'
+                });
+
+                var tph = $('<div>', {
+                    'class': 'target-photo'
+                });
+
+                tph.append(
+                    $('<input>', {
+                        'type': 'checkbox',
+                        'name': 'targets[]',
+                        'value': t.id,
+                        'class': 'ch-t'
+                    })
+                );
+
+                var tl = $('<a>', {
+                    'href': 'https://vk.com/id' + t.id,
+                    'target': '_blank'
+                });
+
+                var timg = $('<img>', {
+                    'alt': 'Image',
+                    'src': t['photo_100']
+                });
+
+                tl.append(timg);
+                tph.append(tl);
+
+                tb.append(tph);
+
+                tb.append($('<div>', {
+                    'class': 'target-name'
+                }).append(
+                    $('<a>', {
+                        'href': 'https://vk.com/id' + t.id,
+                        'text': t.first_name + ' ' + t.last_name,
+                        'target': '_blank'
+                    })
+                ));
+                div.append(tb);
+            });
+
+            $("#results-box").append($('<button>', {
+                'text': "Оповестить",
+                'id': 'send-notification'
+            }));
+
+            $("#send-notification").click(function () {
+                var selected = [];
+                $("input:checkbox:checked").each(function () {
+                    selected.push($(this).val());
+                });
+                console.log(selected);
+            });
+
+            $("#results-box").append(div);
+            $(".target-block").click(function () {
+                var cb = $(this).find($('input'));
+                if (cb.prop('checked')) {
+                    cb.prop('checked', false);
+                } else {
+                    cb.prop('checked', true);
+                }
+            });
+        }
+    );
+}
+
+function runProgressCheckerForAttack() {
+    app.intervalId = setInterval(function () {
+        $.post(
+            'get_attack_status/',
+            {
+                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            function (status) {
+                if (status == -1) {
+                    console.log('Error getting attack status!');
+                    clearInterval(app.intervalId);
+                } else {
+                    if (status) {
+                        clearInterval(app.intervalId);
+                        $("#waiting").remove();
+                        $("#results-box").append('<p>Завершенно</p>');
+                        getAttackResults();
+                    }
+                }
+            }
+        );
+    }, 1000);
+}
+
+function runPercolationAttack() {
+    $.post(
+        'run_attack/',
+        {
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+        },
+        function (data) {
+            if (data == 1) {
+                runProgressCheckerForAttack();
+                var rb = $("#results-box");
+                rb.append('<p>Началась направленная атака на сообщество. Дождитесь её окончания!</p>');
+                rb.append('<img src="/static/img/ajax-loader.gif" alt="" id="waiting" />')
+            } else {
+                console.log('Error!');
+            }
+        }
+    );
+}
+
 function updateProgressBar(id, percentage) {
     $("#" + id).css("width", (percentage + "%"));
 }
 
-function runProgressCheckerForRelationsSearch(){
+function runProgressCheckerForRelationsSearch() {
     app.intervalId = setInterval(function () {
         $.post(
             'relations_search_status/',
@@ -34,7 +159,9 @@ function runProgressCheckerForRelationsSearch(){
                     if (data['ready']) {
                         clearInterval(app.intervalId);
                         $("#progressbar").remove();
-                        $("#results-box").append('<p>Завершенно</p>');
+                        var rb = $("#results-box");
+                        rb.append('<p>Завершенно</p>');
+                        runPercolationAttack();
                     } else {
                         app.parsedRelations = data['parsed'];
                         updateProgressBar("progress", ((app.parsedRelations / app.groupMembersCount) * 100));
@@ -51,7 +178,7 @@ function runRelationsSearch() {
         {
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
         },
-        function(data) {
+        function (data) {
             if (data == 1) {
                 runProgressCheckerForRelationsSearch();
             } else {

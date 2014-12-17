@@ -4,7 +4,8 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from views import Index, get_cities_by_query, run_group_parser, get_group_parsing_status, get_group_members_count, \
-    get_friends_parsing_status, get_groups_by_query, run_relations_search, get_relations_search_status
+    get_friends_parsing_status, get_groups_by_query, run_relations_search, get_relations_search_status, run_attack, \
+       get_attack_status, get_attack_results
 
 
 urlpatterns = patterns('',
@@ -17,7 +18,9 @@ urlpatterns = patterns('',
        url(r'^friends_parsing_status/$', get_friends_parsing_status),
        url(r'^run_relations_search/$', run_relations_search),
        url(r'^relations_search_status/$', get_relations_search_status),
-       # url(r'^blog/', include('blog.urls')),
+       url(r'^run_attack/$', run_attack),
+       url(r'^get_attack_status/$', get_attack_status),
+       url(r'^get_attack_results/$', get_attack_results),
        url(r'^admin/', include(admin.site.urls)),
 )
 

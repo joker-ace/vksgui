@@ -7,9 +7,11 @@ from threading import Thread
 import requests
 from django.conf import settings
 import pymongo
+import networkx as nx
 
 from sna.celery import app
 from sna.utils import create_chunk, create_execute_code
+from attaks.attacks import attack
 
 
 @app.task
@@ -163,3 +165,25 @@ def parse_members_relations(gid):
         for member in common_friends_c.find({}, {'_uid': 0}):
             line = (str(member['uid']) + " " + ' '.join(map(str, member['friends']))).strip() + '\n'
             outf.write(line)
+
+
+def printTargets(percTreshold, listOfTargets, gid):
+    i = 0
+    path = os.path.join(settings.MEMBERS_FILES_DIR, '{}_targets.txt'.format(gid))
+    with open(path, 'w') as fdWrite:
+        while i < int(len(listOfTargets) * percTreshold):
+            fdWrite.write("{}\n".format(listOfTargets[i]))
+            i += 1
+
+@app.task
+def start_percolation_attack(gid):
+    """
+
+    :param gid:
+    :return:
+    """
+    path = os.path.join(settings.MEMBERS_FILES_DIR, '{}_common_friends.txt'.format(gid))
+    graph = nx.read_adjlist(path, delimiter=' ')
+    attack(graph, 'target')
+    results = attack(graph, 'target')
+    printTargets(results[1], results[6], gid)

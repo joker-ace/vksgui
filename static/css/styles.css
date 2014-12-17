@@ -11,13 +11,14 @@ body {
 
 #header {
     width: 100%;
-    height: 130px;
+    height: 100px;
     background-color: cornflowerblue;
 }
 
 #content {
     width: 100%;
-    height: 400px;
+    height: auto;
+    min-height: 400px;
 }
 
 #results-box {
@@ -25,6 +26,45 @@ body {
     width: 75%;
     background-color: darkgray;
     height: inherit;
+    min-height: 400px;
+}
+
+#targets {
+    display: inline-block;
+    height: 415px;
+    overflow-y: scroll;
+}
+
+.target-block {
+    display: inline-block;
+    width: 165px;
+    float: left;
+    border: 1px solid blueviolet;
+    margin: 10px;
+}
+
+.target-block:hover {
+    border-color: red;
+}
+
+.target-photo {
+    display: block;
+    width: 100px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.target-name {
+    text-align: center;
+}
+
+.ch-t {
+    display: inline-block;
+    position: absolute;
+    left: -22px;
+    top: 10px;
+    margin: 0;
+    padding: 0;
 }
 
 .sidebar-header {
@@ -48,6 +88,7 @@ body {
     width: 25%;
     height: inherit;
     background-color: cadetblue;
+    min-height: 400px;
 }
 
 .filter-row {

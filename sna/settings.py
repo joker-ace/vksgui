@@ -113,6 +113,7 @@ TEMPLATE_DIRS = (
 
 VK_API_HOST = 'https://api.vk.com/method/'
 
+GET_USER_URL = VK_API_HOST + 'users.get'
 SEARCH_URL = VK_API_HOST + 'users.search'
 GET_GROUP_MEMBERS_URL = VK_API_HOST + 'groups.getMembers'
 GET_CITIES_URL = VK_API_HOST + 'database.getCities'
@@ -122,7 +123,7 @@ EXECUTE_URL = VK_API_HOST + 'execute'
 
 
 
-VK_API_TOKEN = '6fd83ef79fa499c8ba8c855fba3cd86d678b017559fdfad0660172f59f38bfd7bd4f0a7d4ad6412c535f3'
+VK_API_TOKEN = 'b66dc89cfcc49744f407fc10f6700addc7e23bec2a0f26e95a170d21eaba97345d1b8af5e2209b83415d1'
 API_VERSION = '5.27'
 
 REQUEST_DATA = {

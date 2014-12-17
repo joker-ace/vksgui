@@ -15,6 +15,7 @@ from utils import json_response
 from sna.celery import app
 import sna.tasks
 
+import os
 
 class Index(View):
     """
@@ -167,7 +168,6 @@ def run_relations_search(request):
     """
     code = 0
     gid = request.session.get('gid')
-    print gid
     if gid:
         request.session['tid'] = sna.tasks.parse_members_relations.delay(gid).id
         code = 1
@@ -188,3 +188,59 @@ def get_relations_search_status(request):
         parsed = MongoClient()[gid]['common_friends'].count()
         return json_response(dict(ready=status, parsed=parsed))
     return json_response(-1)
+
+
+def run_attack(request):
+    """
+
+    :param request:
+    :return:
+    """
+    code = 0
+    gid = request.session.get('gid')
+    if gid:
+        request.session['tid'] = sna.tasks.start_percolation_attack.delay(gid).id
+        code = 1
+    return json_response(code)
+
+
+def get_attack_status(request):
+    """
+
+    :param request:
+    :return:
+    """
+    tid = request.session.get('tid')
+    return json_response(app.AsyncResult(tid).ready())
+
+
+def get_attack_results(request):
+    """
+
+    :param request:
+    :return:
+    """
+    gid = request.session.get('gid')
+    ids = list()
+    if gid:
+        path = os.path.join(settings.MEMBERS_FILES_DIR, '{}_targets.txt'.format(gid))
+        with open(path) as inf:
+            for id in inf:
+                if id != '' or id != '\n':
+                    ids.append(id)
+
+    ids = ','.join(ids)
+
+    data = {
+        'v': settings.API_VERSION,
+        'access_token': settings.VK_API_TOKEN,
+        'user_ids': ids,
+        'fields': 'photo_100'
+    }
+
+    r = requests.post(settings.GET_USER_URL, data=data)
+    response = r.json()
+    if u'response' in response:
+        return json_response(response[u'response'])
+
+    return json_response(None)
