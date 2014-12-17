@@ -1,73 +1,134 @@
 // global constants
-var timer = null;
-var doneTypingInterval = 1000;
-var countryId = 0;
-var cityId = 0;
-var groupId = 0;
 
-// possible cities request processing flag
-var pcrp = false;
-var pgrp = false;
+var app = {
+    timer: 0,
+    doneTypingInterval: 1000,
+    countryId: 0,
+    cityId: 0,
+    groupId: 0,
+    taskId: 0,
+    parsedFriends: 0,
+    requests: {
+        cities: false,
+        countries: false,
+        groups: false
+    }
+};
 
-var intervalId = null;
+function updateProgressBar(id, percentage) {
+    $("#" + id).css("width", (percentage + "%"));
+}
 
-
-function statusCheckerForGroupMembersFriendsParser() {
-    intervalId = setInterval(function () {
+function runProgressCheckerForRelationsSearch(){
+    app.intervalId = setInterval(function () {
         $.post(
-            'checkgroupmembersfriendsparsingstatus/',
+            'relations_search_status/',
             {
                 csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
             },
             function (data) {
                 if (data == -1) {
-                    console.log('Error!');
-                } else if (data === false) {
-                    console.log('Pending!');
-                } else if (data === true) {
-                    console.log('Ready!');
-                    clearInterval(intervalId);
-                    getParsedMembersCount();
+                    console.log('Error getting count parsed members with relations!');
+                    clearInterval(app.intervalId);
+                } else {
+                    if (data['ready']) {
+                        clearInterval(app.intervalId);
+                        $("#progressbar").remove();
+                        $("#results-box").append('<p>Завершенно</p>');
+                    } else {
+                        app.parsedRelations = data['parsed'];
+                        updateProgressBar("progress", ((app.parsedRelations / app.groupMembersCount) * 100));
+                    }
                 }
             }
         );
-    }, 5000);
+    }, 1000);
 }
 
-
-function getParsedMembersCount() {
-
+function runRelationsSearch() {
     $.post(
-        'getparsedmemberscount/',
+        'run_relations_search/',
         {
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
         },
-        function (data) {
-            var rb = $("#results-box");
-            $("#progress").remove();
-            rb.append('<p>Parsed:' + data + '</p>');
-            rb.append('<p>Parsing friends of group members</p>');
-            rb.append('<img src="/static/img/ajax-loader.gif" alt="" id="progress"/>');
+        function(data) {
+            if (data == 1) {
+                runProgressCheckerForRelationsSearch();
+            } else {
+                console.log('Error!');
+            }
         }
     );
 }
 
-function statusCheckerForGroupParsing() {
-    intervalId = setInterval(function () {
+function runProgressCheckerForFriendsParsing() {
+    app.intervalId = setInterval(function () {
         $.post(
-            'checkgroupparsingstatus/',
+            'friends_parsing_status/',
             {
                 csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
             },
             function (data) {
                 if (data == -1) {
+                    console.log('Error getting count of parsed friends!');
+                    clearInterval(app.intervalId);
+                } else {
+                    if (data['ready']) {
+                        clearInterval(app.intervalId);
+                        $("#progressbar").remove();
+                        var rb = $("#results-box");
+                        rb.append('<p>Завершенно</p>');
+                        rb.append('<p>Поиск дружественных связей между участниками сообщества</p>');
+                        rb.append('<div id="progressbar"><div id="progress"></div></div>');
+                        runRelationsSearch();
+                    } else {
+                        app.parsedFriends = data['parsed'];
+                        updateProgressBar("progress", ((app.parsedFriends / app.groupMembersCount) * 100));
+                    }
+                }
+            }
+        );
+    }, 3000);
+}
+
+
+function getGroupMembersCount() {
+    $.post(
+        'get_group_members_count/',
+        {
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+        },
+        function (count) {
+            if (count >= 0) {
+                var rb = $("#results-box");
+                $("#progress").remove();
+                app.groupMembersCount = count;
+                rb.append('<p>Активные участники: ' + count + '</p>');
+                rb.append('<p>Получение друзей участников сообщества</p>');
+                rb.append('<div id="progressbar"><div id="progress"></div></div>');
+                runProgressCheckerForFriendsParsing();
+            } else {
+                $("#results-box").html('<p style="color:red">Error!!!</p>');
+            }
+        }
+    );
+}
+
+function runProgressCheckerForGroupParsing() {
+    app.intervalId = setInterval(function () {
+        $.post(
+            'group_parsing_status/',
+            {
+                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            function (status) {
+                if (status == -1) {
+                    // DEBUG
                     console.log('Error!');
-                } else if (data === false) {
-                    console.log('Pending!');
-                } else if (data === true) {
-                    console.log('Ready!');
-                    clearInterval(intervalId);
-                    getParsedMembersCount();
+                    clearInterval(app.intervalId);
+                } else if (status) {
+                    clearInterval(app.intervalId);
+                    getGroupMembersCount();
                 }
             }
         );
@@ -77,18 +138,18 @@ function statusCheckerForGroupParsing() {
 $(document).ready(function () {
 
     $("#start").click(function () {
-
         $.post(
-            'rungroupparsing/',
+            'run_group_parser/',
             {
                 csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
                 gid: $("#group_id").val()
             },
-            function (data) {
-                if (data === 1) {
-                    statusCheckerForGroupParsing();
+            function (count) {
+                if (count >= 0) {
+                    runProgressCheckerForGroupParsing();
                     var rb = $("#results-box");
-                    rb.append('<p>Parsing group members, please wait</p>');
+                    rb.html('');
+                    rb.append('<p>Получение списка участников сообщества</p>');
                     rb.append('<img src="/static/img/ajax-loader.gif" alt="" id="progress"/>');
                     return;
                 }
@@ -97,25 +158,26 @@ $(document).ready(function () {
         );
     });
 
-// countries list changed handler
+    // countries list changed handler
     $("#country").change(function () {
-        countryId = parseInt($(this).val());
-        if (countryId == 0) {
+        app.countryId = parseInt($(this).val());
+        if (app.countryId == 0) {
             $('#city').empty();
             return;
         }
+
         $.post(
-            'getvkcities/',
+            'get_cities/',
             {
                 csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
-                country: countryId
+                country: app.countryId
             },
             function (data) {
                 if (data.length == 0) return;
                 var lst = $('#city');
                 lst.empty();
 
-                data.forEach(function (element, index, array) {
+                data.forEach(function (element) {
                     if (!element.hasOwnProperty("id")) {
                         return;
                     }
@@ -135,8 +197,8 @@ $(document).ready(function () {
 
 // cities list changed handler
     $("#city").change(function () {
-        cityId = parseInt($(this).val());
-        if (cityId == -1) {
+        app.cityId = parseInt($(this).val());
+        if (app.cityId == -1) {
             $(this).hide();
 
             if ($('#city_custom').length) {
@@ -191,25 +253,25 @@ $(document).ready(function () {
 ;
 
 function groupKeyDown() {
-    clearTimeout(timer);
+    clearTimeout(app.timer);
 }
 
 function groupKeyUp() {
     if ($(this).val().length < 3) {
         return;
     }
-    clearTimeout(timer);
-    timer = setTimeout(getPossibleGroups, doneTypingInterval);
+    clearTimeout(app.timer);
+    app.timer = setTimeout(getGroups, app.doneTypingInterval);
 }
 
-function getPossibleGroups() {
-    if (pgrp) return;
-    pgrp = true;
+function getGroups() {
+    if (app.requests.groups) return;
+    app.requests.groups = true;
     var query = $("#group_name").val();
     if (query === '') return;
     var type = $("#group_type").val();
     $.post(
-        'getvkgroups/',
+        'get_groups/',
         {
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
             query: query,
@@ -228,7 +290,7 @@ function getPossibleGroups() {
                 });
             }
 
-            data.forEach(function (group, index, array) {
+            data.forEach(function (group) {
 
                 var innerDiv = $('<div>', {
                     'class': 'group-row'
@@ -257,37 +319,38 @@ function getPossibleGroups() {
 
             $(".group-row").click(function () {
                 $("#group_name").val($(this).find(".name").text());
-                groupId = parseInt($(this).find("span").text());
+                app.groupId = parseInt($(this).find("span").text());
                 $("#group_id").val($(this).find("span").text());
                 outerDiv.html('');
             });
         }
     );
-    pgrp = false;
+    app.requests.groups = false;
 }
 
 function cityKeyDown() {
-    clearTimeout(timer);
+    clearTimeout(app.timer);
 }
 
 function cityKeyUp() {
     if ($(this).val().length < 3) {
         return;
     }
-    clearTimeout(timer);
-    timer = setTimeout(getPossibleCities, doneTypingInterval);
+    clearTimeout(app.timer);
+    app.timer = setTimeout(getCities, app.doneTypingInterval);
 }
 
-function getPossibleCities() {
-    if (pcrp) return;
-    pcrp = true;
+function getCities() {
+    if (app.requests.cities) return;
+    app.requests.cities = true;
+
     var query = $("#city_custom").val() || $('#city').val();
     if (query === '') return;
     $.post(
-        'getvkcities/',
+        'get_cities/',
         {
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
-            country: countryId,
+            country: app.cityId,
             query: query
         },
 
@@ -304,7 +367,7 @@ function getPossibleCities() {
                 });
             }
 
-            data.forEach(function (city, index, array) {
+            data.forEach(function (city) {
 
                 var innerDiv = $('<div>', {
                     'class': 'city-row'
@@ -314,7 +377,7 @@ function getPossibleCities() {
                     'text': city['id']
                 }).hide());
 
-                props.forEach(function (property, index, array) {
+                props.forEach(function (property) {
                     if (city.hasOwnProperty(property)) {
                         innerDiv.append(
                             $('<div>', {
@@ -327,14 +390,15 @@ function getPossibleCities() {
                 });
                 outerDiv.append(innerDiv);
             });
+
             $("#city").parent().append(outerDiv);
 
             $(".city-row").click(function () {
                 $("#city_custom").val($(this).find(".title").text());
-                cityId = parseInt($(this).find("span").text());
+                app.cityId = parseInt($(this).find("span").text());
                 outerDiv.html('');
             });
         }
     );
-    pcrp = false;
+    app.requests.cities = false;
 }

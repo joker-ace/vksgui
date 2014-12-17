@@ -50,8 +50,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'djcelery'
+    'django.contrib.staticfiles'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -123,7 +122,7 @@ EXECUTE_URL = VK_API_HOST + 'execute'
 
 
 
-VK_API_TOKEN = 'dfff2f6544f422f59b1d524d8cb12d6cee1072acbd1760a74a64dee1093cb7cf02c7fc5c6ffa284533ddb'
+VK_API_TOKEN = '6fd83ef79fa499c8ba8c855fba3cd86d678b017559fdfad0660172f59f38bfd7bd4f0a7d4ad6412c535f3'
 API_VERSION = '5.27'
 
 REQUEST_DATA = {

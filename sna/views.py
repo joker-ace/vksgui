@@ -1,9 +1,15 @@
 # coding=utf-8
+
+"""
+This module contains views
+"""
+
 import requests
 from django.views.generic import View
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.conf import settings
+from pymongo import MongoClient
 
 from utils import json_response
 from sna.celery import app
@@ -11,105 +17,174 @@ import sna.tasks
 
 
 class Index(View):
-    def get(self, request, *args, **kwargs):
+    """
+    This is a view class for index page
+    """
+    template_name = "index.html"
+
+    def get(self, request):
+        """
+
+        :param request:
+        :return:
+        """
         countries = {
             '1': 'Россия',
             '2': 'Украина'
         }
 
-        return render_to_response("index.html", {"countries": countries},
+        return render_to_response(self.template_name, {"countries": countries},
                                   RequestContext(request))
 
 
-class VKGetGroups(View):
-    def post(self, request, *args, **kwargs):
-        query = request.POST.get('query', '')
-        if query == '':
-            json_response(0)
+def get_groups_by_query(request):
+    """
 
-        group_type = request.POST.get('type', '')
+    :param request:
+    :return:
+    """
+    query = request.POST.get('query', '')
+    if query == '':
+        json_response(0)
 
-        data = {
-            'v': settings.API_VERSION,
-            'access_token': settings.VK_API_TOKEN,
-            'q': query,
-            'count': 1000,
-            'type': group_type
-        }
+    group_type = request.POST.get('type', '')
 
-        url = settings.GET_GROUPS_URL
-        r = requests.post(url, data=data)
-        groups_data = r.json()
-        if u'response' in groups_data:
-            return json_response(groups_data[u'response']['items'])
+    data = {
+        'v': settings.API_VERSION,
+        'access_token': settings.VK_API_TOKEN,
+        'q': query,
+        'count': 1000,
+        'type': group_type
+    }
 
+    r = requests.post(settings.GET_GROUPS_URL, data=data)
+    groups_data = r.json()
+    if u'response' in groups_data:
+        return json_response(groups_data[u'response']['items'])
+
+    return json_response(0)
+
+
+def get_cities_by_query(request):
+    """
+
+    :param request:
+    :return:
+    """
+    cid = int(request.POST.get('country', 0))
+    if cid == 0:
         return json_response(0)
 
+    data = {
+        'country_id': cid,
+        'v': settings.API_VERSION,
+        'access_token': settings.VK_API_TOKEN
+    }
 
-class VKGetCities(View):
-    def post(self, request, *args, **kwargs):
-        countryId = int(request.POST.get('country', 0))
-        if countryId == 0:
-            return json_response(0)
+    query = request.POST.get('query', None)
+    if query:
+        data['q'] = query
 
-        data = {
-            'country_id': countryId,
-            'v': settings.API_VERSION,
-            'access_token': settings.VK_API_TOKEN
-        }
+    url = settings.GET_CITIES_URL
+    r = requests.post(url, data=data)
 
-        query = request.POST.get('query', None)
-        if query:
-            data['q'] = query
+    cities_data = r.json()
+    items = []
 
-        url = settings.GET_CITIES_URL
-        r = requests.post(url, data=data)
+    if u'response' in cities_data:
+        items = cities_data[u'response']['items']
 
-        cities_data = r.json()
-        items = []
-
-        if u'response' in cities_data:
-            items = cities_data[u'response']['items']
-
-        return json_response(items)
+    return json_response(items)
 
 
-class VKGroupParser(View):
-    def post(self, request, *args, **kwargs):
+def run_group_parser(request):
+    """
+
+    :param request:
+    :return:
+    """
+
+    code = 0
+    gid = request.POST.get('gid', None)
+    if gid:
+        c = MongoClient()
+        c[gid]['friends'].remove()
+        c[gid]['common_friends'].remove()
+
+        request.session['tid'] = sna.tasks.parse_group.delay(gid).id
+        request.session['gid'] = gid
         code = 1
-        gid = request.POST.get('gid', None)
-        if gid:
-            request.session['pgtid'] = sna.tasks.parse_group.delay(gid).id
-            request.session['gid'] = gid
-        else:
-            code = 0
-        return json_response(code)
+
+    return json_response(code)
 
 
-class VKGroupParserChecker(View):
-    def post(self, request, *args, **kwargs):
-        tid = request.session.get('pgtid', None)
-        if tid:
-            result = app.AsyncResult(tid)
-            return json_response(result.ready())
-        return json_response(-1)
+def get_group_parsing_status(request):
+    """
+
+    :param request:
+    :return:
+    """
+    tid = request.session.get('tid')
+    if tid:
+        return json_response(app.AsyncResult(tid).ready())
+    return json_response(-1)
 
 
-class VKGetParsedMembersCount(View):
-    def post(self, request, *args, **kwargs):
-        tid = request.session.get('pgtid', None)
-        if tid:
-            del request.session['pgtid']
-            result = app.AsyncResult(tid)
-            request.session['pgmftid'] = sna.tasks.parse_group_members_friends.delay(request.session['gid']).id
-            return json_response(result.get())
-        return json_response(-1)
+def get_group_members_count(request):
+    """
+
+    :param request:
+    :return:
+    """
+    tid = request.session.get('tid')
+    if tid:
+        count = app.AsyncResult(tid).get()
+        request.session['tid'] = sna.tasks.parse_group_members_friends.delay(request.session['gid']).id
+        return json_response(count)
+    return json_response(-1)
 
 
-class VKGroupMembersFriendsChecker(View):
-    def post(self, request, *args, **kwargs):
-        tid = request.session.get('pgmftid', None)
-        if tid:
-            result = app.AsyncResult(tid)
-            return json_response(result.ready())
-        return json_response(-1)
+def get_friends_parsing_status(request):
+    """
+
+    :param request:
+    :return:
+    """
+    tid = request.session.get('tid')
+    if tid:
+        status = app.AsyncResult(tid).ready()
+        gid = request.session.get('gid')
+        parsed = MongoClient()[gid]['friends'].count()
+        return json_response(dict(ready=status, parsed=parsed))
+    return json_response(-1)
+
+
+def run_relations_search(request):
+    """
+
+    :param request:
+    :return:
+    """
+    code = 0
+    gid = request.session.get('gid')
+    print gid
+    if gid:
+        request.session['tid'] = sna.tasks.parse_members_relations.delay(gid).id
+        code = 1
+
+    return json_response(code)
+
+
+def get_relations_search_status(request):
+    """
+
+    :param request:
+    :return:
+    """
+    tid = request.session.get('tid')
+    if tid:
+        status = app.AsyncResult(tid).ready()
+        gid = request.session.get('gid')
+        parsed = MongoClient()[gid]['common_friends'].count()
+        return json_response(dict(ready=status, parsed=parsed))
+    return json_response(-1)

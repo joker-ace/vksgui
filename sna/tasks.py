@@ -1,16 +1,24 @@
 # coding=utf-8
 from __future__ import absolute_import
-from sna.celery import app
-import requests
 import os
 import time
-from sna.utils import create_chunk, create_execute_code
-from django.conf import settings
 from threading import Thread
+
+import requests
+from django.conf import settings
 import pymongo
+
+from sna.celery import app
+from sna.utils import create_chunk, create_execute_code
+
 
 @app.task
 def parse_group(gid):
+    """
+
+    :param gid:
+    :return:
+    """
     path = os.path.join(settings.MEMBERS_FILES_DIR, '{}.members'.format(str(gid)))
     rd = settings.REQUEST_DATA.copy()
 
@@ -31,7 +39,9 @@ def parse_group(gid):
                     response = requests.post(url=settings.GET_GROUP_MEMBERS_URL, data=rd)
                     response = eval(response.content)['response']
                     with open(path, 'a') as fptr:
-                        fptr.write(','.join(map(str, response['items'])) + '\n')
+                        line = ','.join(map(str, response['items'])) + '\n'
+                        if line != '\n':
+                            fptr.write(line)
                     rd['offset'] += 1000
                 except KeyError:
                     pass
@@ -41,6 +51,12 @@ def parse_group(gid):
 
 
 def parse_group_members_friends_routine(rd, gid):
+    """
+
+    :param rd:
+    :param gid:
+    :return:
+    """
     client = pymongo.MongoClient()
     db = client[gid]
     friends_c = db['friends']
@@ -53,19 +69,30 @@ def parse_group_members_friends_routine(rd, gid):
                     continue
                 friends_c.insert(dict(uid=int(member), friends=friends_list))
             break
-        except Exception as ex:
-            print response.content
+        except Exception:
+            print rd
+            try:
+                print response.content
+            except:
+                print response
+
             print 'Retry in 1 second'
             time.sleep(0.7)
 
 
 @app.task
 def parse_group_members_friends(gid):
+    """
+
+    :param gid:
+    :return:
+    """
     members = list()
     path = os.path.join(settings.MEMBERS_FILES_DIR, '{}.members'.format(str(gid)))
     with open(path) as f:
         for line in f:
-            members.extend(line.strip().split(','))
+            if line != '\n':
+                members.extend(line.strip().split(','))
 
     rd = settings.REQUEST_DATA.copy()
 
@@ -80,4 +107,59 @@ def parse_group_members_friends(gid):
 
         for p in processes:
             p.join()
-        time.sleep(0.2)
+        time.sleep(0.5)
+
+
+def find_common_friends(gid, uids):
+    """
+
+    :param gid:
+    :param uids:
+    :return:
+    """
+    client = pymongo.MongoClient()
+    db = client[gid]
+    friends_c = db['friends']
+    common_friends_c = db['common_friends']
+    chunk = list()
+    for member in uids:
+        results = friends_c.find({'friends': {'$in': [int(member)]}})
+        mcf = dict(uid=member, friends=list())
+        for m in results:
+            mcf['friends'].append(m['uid'])
+        chunk.append(mcf)
+
+    common_friends_c.insert(chunk)
+
+
+@app.task
+def parse_members_relations(gid):
+    """
+
+    :param gid:
+    :return:
+    """
+    members = list()
+    path = os.path.join(settings.MEMBERS_FILES_DIR, '{}.members'.format(str(gid)))
+    with open(path) as f:
+        for line in f:
+            if line != '\n':
+                members.extend(line.strip().split(','))
+    threads = []
+    for chunk in create_chunk(members, 200):
+        for uids in create_chunk(chunk, 50):
+            t = Thread(target=find_common_friends, args=(gid, uids))
+            t.start()
+            threads.append(t)
+
+        for t in threads:
+            t.join()
+
+    client = pymongo.MongoClient()
+    db = client[gid]
+    common_friends_c = db['common_friends']
+    path = os.path.join(settings.MEMBERS_FILES_DIR, '{}_common_friends.txt'.format(str(gid)))
+    with open(path, 'w') as outf:
+        for member in common_friends_c.find({}, {'_uid': 0}):
+            line = (str(member['uid']) + " " + ' '.join(map(str, member['friends']))).strip() + '\n'
+            outf.write(line)

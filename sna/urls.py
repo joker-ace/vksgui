@@ -3,21 +3,22 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
-from views import Index, VKGetCities, VKGetGroups, VKGroupParser, VKGroupParserChecker, VKGetParsedMembersCount, \
-    VKGroupMembersFriendsChecker
+from views import Index, get_cities_by_query, run_group_parser, get_group_parsing_status, get_group_members_count, \
+    get_friends_parsing_status, get_groups_by_query, run_relations_search, get_relations_search_status
 
 
 urlpatterns = patterns('',
-                       # Examples:
-                       url(r'^$', Index.as_view(), name='index'),
-                       url(r'^getvkcities/$', VKGetCities.as_view()),
-                       url(r'^getvkgroups/$', VKGetGroups.as_view()),
-                       url(r'^rungroupparsing/$', VKGroupParser.as_view()),
-                       url(r'^checkgroupparsingstatus/$', VKGroupParserChecker.as_view()),
-                       url(r'^getparsedmemberscount/$', VKGetParsedMembersCount.as_view()),
-                       url(r'^checkgroupmembersfriendsparsingstatus/$', VKGroupMembersFriendsChecker.as_view()),
-                       # url(r'^blog/', include('blog.urls')),
-                       url(r'^admin/', include(admin.site.urls)),
+       url(r'^$', Index.as_view(), name='index'),
+       url(r'^get_cities/$', get_cities_by_query),
+       url(r'^get_groups/$', get_groups_by_query),
+       url(r'^run_group_parser/$', run_group_parser),
+       url(r'^group_parsing_status/$', get_group_parsing_status),
+       url(r'^get_group_members_count/$', get_group_members_count),
+       url(r'^friends_parsing_status/$', get_friends_parsing_status),
+       url(r'^run_relations_search/$', run_relations_search),
+       url(r'^relations_search_status/$', get_relations_search_status),
+       # url(r'^blog/', include('blog.urls')),
+       url(r'^admin/', include(admin.site.urls)),
 )
 
 urlpatterns += staticfiles_urlpatterns()
