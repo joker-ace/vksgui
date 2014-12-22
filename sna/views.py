@@ -4,6 +4,9 @@
 This module contains views
 """
 
+from datetime import datetime
+import os
+
 import requests
 from django.views.generic import View
 from django.shortcuts import render_to_response
@@ -11,11 +14,10 @@ from django.template import RequestContext
 from django.conf import settings
 from pymongo import MongoClient
 
-from utils import json_response
+from utils import json_response, get_access_token
 from sna.celery import app
 import sna.tasks
 
-import os
 
 class Index(View):
     """
@@ -29,6 +31,7 @@ class Index(View):
         :param request:
         :return:
         """
+        request.session['access_token'] = get_access_token()
         countries = {
             '1': 'Россия',
             '2': 'Украина'
@@ -52,7 +55,7 @@ def get_groups_by_query(request):
 
     data = {
         'v': settings.API_VERSION,
-        'access_token': settings.VK_API_TOKEN,
+        'access_token': request.session.get('access_token'),
         'q': query,
         'count': 1000,
         'type': group_type
@@ -79,7 +82,7 @@ def get_cities_by_query(request):
     data = {
         'country_id': cid,
         'v': settings.API_VERSION,
-        'access_token': settings.VK_API_TOKEN
+        'access_token': request.session.get('access_token')
     }
 
     query = request.POST.get('query', None)
@@ -112,7 +115,7 @@ def run_group_parser(request):
         c[gid]['friends'].remove()
         c[gid]['common_friends'].remove()
 
-        request.session['tid'] = sna.tasks.parse_group.delay(gid).id
+        request.session['tid'] = sna.tasks.parse_group.delay(gid, request.session.get('access_token')).id
         request.session['gid'] = gid
         code = 1
 
@@ -140,7 +143,7 @@ def get_group_members_count(request):
     tid = request.session.get('tid')
     if tid:
         count = app.AsyncResult(tid).get()
-        request.session['tid'] = sna.tasks.parse_group_members_friends.delay(request.session['gid']).id
+        request.session['tid'] = sna.tasks.parse_group_members_friends.delay(request.session['gid'], request.session.get('access_token')).id
         return json_response(count)
     return json_response(-1)
 
@@ -233,9 +236,9 @@ def get_attack_results(request):
 
     data = {
         'v': settings.API_VERSION,
-        'access_token': settings.VK_API_TOKEN,
+        'access_token': request.session.get('access_token'),
         'user_ids': ids,
-        'fields': 'photo_100'
+        'fields': 'photo_100,can_write_private_message'
     }
 
     r = requests.post(settings.GET_USER_URL, data=data)
@@ -244,3 +247,21 @@ def get_attack_results(request):
         return json_response(response[u'response'])
 
     return json_response(None)
+
+
+def send_notification(request):
+    """
+
+    :param request:
+    :return:
+    """
+    if 'ids' not in request.POST:
+        return json_response(-1)
+
+    ids = request.POST.get('ids')
+    rd = settings.REQUEST_DATA.copy()
+    rd['user_ids'] = ids
+    rd['message'] = str(datetime.now()) + "\nТест для отправки сообщений"
+    rd['access_token'] = request.session.get('access_token')
+    requests.post(settings.SEND_MESSAGE_URL, data=rd)
+    return json_response(1)

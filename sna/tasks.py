@@ -15,7 +15,7 @@ from attaks.attacks import attack
 
 
 @app.task
-def parse_group(gid):
+def parse_group(gid, access_token):
     """
 
     :param gid:
@@ -26,6 +26,7 @@ def parse_group(gid):
 
     rd['group_id'] = str(gid)
     rd['sort'] = 'id_asc'
+    rd['access_token'] = access_token
     response = requests.post(url=settings.GET_GROUP_MEMBERS_URL, data=rd)
     response = eval(response.content)['response']
     count = response['count']
@@ -83,7 +84,7 @@ def parse_group_members_friends_routine(rd, gid):
 
 
 @app.task
-def parse_group_members_friends(gid):
+def parse_group_members_friends(gid, access_token):
     """
 
     :param gid:
@@ -97,7 +98,7 @@ def parse_group_members_friends(gid):
                 members.extend(line.strip().split(','))
 
     rd = settings.REQUEST_DATA.copy()
-
+    rd['access_token'] = access_token
     for chunk in create_chunk(members, chunk_size=75):
         processes = list()
         for ids in create_chunk(chunk, 25):

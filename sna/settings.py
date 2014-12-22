@@ -120,13 +120,15 @@ GET_CITIES_URL = VK_API_HOST + 'database.getCities'
 GET_GROUPS_URL = VK_API_HOST + 'groups.search'
 GET_FRIENDS_OF_USER_URL = VK_API_HOST + 'friends.get'
 EXECUTE_URL = VK_API_HOST + 'execute'
+SEND_MESSAGE_URL = VK_API_HOST + 'messages.send'
 
+TOKEN_REQUEST_URL = 'https://oauth.vk.com/authorize?client_id=4687599&scope=all&redirect_uri=https://oauth.vk.com/blank.html&response_type=token&v=5.27'
 
+VK_USER_EMAIL = 'gaidukov_denis@mail.ru'
+VK_USER_PASSW = '!Rfhkbrb63340'
 
-VK_API_TOKEN = 'b66dc89cfcc49744f407fc10f6700addc7e23bec2a0f26e95a170d21eaba97345d1b8af5e2209b83415d1'
 API_VERSION = '5.27'
 
 REQUEST_DATA = {
-    'v': API_VERSION,
-    'access_token': VK_API_TOKEN
+    'v': API_VERSION
 }

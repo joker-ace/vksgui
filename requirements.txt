@@ -3,3 +3,6 @@ django-jsonify
 requests
 pymongo
 django-celery
+lxml
+pycurl
+grab

@@ -15,6 +15,19 @@ var app = {
     }
 };
 
+function sendNotifications(ids) {
+    $.post(
+        'send_notification/',
+        {
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
+            ids: ids.toString()
+        },
+        function (status) {
+
+        }
+    );
+}
+
 function getAttackResults() {
     $.post(
         'get_attack_results/',
@@ -22,6 +35,13 @@ function getAttackResults() {
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
         },
         function (targets) {
+
+            if (targets.length == 0) {
+                $("#results-box").append('<p>Не найдено целей для выбраного сообщества</p>');
+                return;
+            }
+
+            app.targets = targets;
             var div = $('<div>', {
                 'id': 'targets'
             });
@@ -35,14 +55,24 @@ function getAttackResults() {
                     'class': 'target-photo'
                 });
 
-                tph.append(
-                    $('<input>', {
-                        'type': 'checkbox',
-                        'name': 'targets[]',
-                        'value': t.id,
-                        'class': 'ch-t'
-                    })
-                );
+                if (t.can_write_private_message) {
+                    tph.append(
+                        $('<input>', {
+                            'type': 'checkbox',
+                            'name': 'targets[]',
+                            'value': t.id,
+                            'class': 'ch-t'
+                        })
+                    );
+                } else {
+                    tph.append(
+                        $('<div>', {
+                            'style': 'color:red',
+                            'class': 'ch-t'
+                        }).append($('<i>', {'class': 'icon-ban-circle'}))
+                    );
+                    tb.prop({'title': 'Пользователь запретил отправку личных сообщений'})
+                }
 
                 var tl = $('<a>', {
                     'href': 'https://vk.com/id' + t.id,
@@ -70,27 +100,49 @@ function getAttackResults() {
                 ));
                 div.append(tb);
             });
-
-            $("#results-box").append($('<button>', {
-                'text': "Оповестить",
+            var rb = $("#results-box");
+            rb.append($('<button>', {
+                'text': "Оповестить выбранных",
                 'id': 'send-notification'
             }));
+
+            rb.append($('<button>', {
+                'text': "Оповестить всех",
+                'id': 'send-notification-to-all'
+            }));
+
+            $("#send-notification-to-all").click(function () {
+                var selected = [];
+                app.targets.forEach(function (target) {
+                    if (target.can_write_private_message == 1) {
+                        selected.push(target.id);
+                    }
+                });
+                sendNotifications(selected);
+            });
 
             $("#send-notification").click(function () {
                 var selected = [];
                 $("input:checkbox:checked").each(function () {
                     selected.push($(this).val());
                 });
-                console.log(selected);
+                sendNotifications(selected);
             });
 
-            $("#results-box").append(div);
+            rb.append(div);
+
+            $(".ch-t").click(function (e) {
+                e.stopPropagation();
+            });
+
             $(".target-block").click(function () {
                 var cb = $(this).find($('input'));
-                if (cb.prop('checked')) {
-                    cb.prop('checked', false);
-                } else {
-                    cb.prop('checked', true);
+                if (!cb.prop('disabled')) {
+                    if (cb.prop('checked')) {
+                        cb.prop('checked', false);
+                    } else {
+                        cb.prop('checked', true);
+                    }
                 }
             });
         }
@@ -111,8 +163,8 @@ function runProgressCheckerForAttack() {
                 } else {
                     if (status) {
                         clearInterval(app.intervalId);
-                        $("#waiting").remove();
-                        $("#results-box").append('<p>Завершенно</p>');
+                        $("#img-wait").remove();
+                        $("#icon4").prop('class', 'icon-check').css('color', '#0E950C');
                         getAttackResults();
                     }
                 }
@@ -131,8 +183,8 @@ function runPercolationAttack() {
             if (data == 1) {
                 runProgressCheckerForAttack();
                 var rb = $("#results-box");
-                rb.append('<p>Началась направленная атака на сообщество. Дождитесь её окончания!</p>');
-                rb.append('<img src="/static/img/ajax-loader.gif" alt="" id="waiting" />')
+                rb.append('<p><i id="icon4" class="icon-check-empty"></i>&nbsp&nbspНачалась направленная атака на сообщество. Дождитесь её окончания!</p>');
+                rb.append('<img src="/static/img/ajax-loader.gif" alt="" id="img-wait" />')
             } else {
                 console.log('Error!');
             }
@@ -159,8 +211,8 @@ function runProgressCheckerForRelationsSearch() {
                     if (data['ready']) {
                         clearInterval(app.intervalId);
                         $("#progressbar").remove();
+                        $("#icon3").prop('class', 'icon-check').css('color', '#0E950C');
                         var rb = $("#results-box");
-                        rb.append('<p>Завершенно</p>');
                         runPercolationAttack();
                     } else {
                         app.parsedRelations = data['parsed'];
@@ -203,9 +255,9 @@ function runProgressCheckerForFriendsParsing() {
                     if (data['ready']) {
                         clearInterval(app.intervalId);
                         $("#progressbar").remove();
+                        $("#icon2").prop('class', 'icon-check').css('color', '#0E950C');
                         var rb = $("#results-box");
-                        rb.append('<p>Завершенно</p>');
-                        rb.append('<p>Поиск дружественных связей между участниками сообщества</p>');
+                        rb.append('<p><i id="icon3" class="icon-check-empty"></i>&nbsp&nbspПоиск дружественных связей между участниками сообщества</p>');
                         rb.append('<div id="progressbar"><div id="progress"></div></div>');
                         runRelationsSearch();
                     } else {
@@ -228,10 +280,12 @@ function getGroupMembersCount() {
         function (count) {
             if (count >= 0) {
                 var rb = $("#results-box");
-                $("#progress").remove();
+                $("#img-wait").remove();
+                $("#icon1").prop('class', 'icon-check').css('color', '#0E950C');
                 app.groupMembersCount = count;
-                rb.append('<p>Активные участники: ' + count + '</p>');
-                rb.append('<p>Получение друзей участников сообщества</p>');
+                rb.append('<p><i id="icon_" class="icon-user"></i>&nbsp&nbspАктивные участники: ' + count + '</p>');
+                $("#icon_").css('color', '#0E950C');
+                rb.append('<p><i id="icon2" class="icon-check-empty">&nbsp&nbsp</i>Получение друзей участников сообщества</p>');
                 rb.append('<div id="progressbar"><div id="progress"></div></div>');
                 runProgressCheckerForFriendsParsing();
             } else {
@@ -262,7 +316,63 @@ function runProgressCheckerForGroupParsing() {
     }, 1000);
 }
 
+$(document).click(function () {
+    var l = $('#list');
+    if (l.length) {
+        l.remove();
+    }
+});
+
 $(document).ready(function () {
+
+    var af = $('#age_from');
+    var at = $('#age_to');
+
+    at.change(function () {
+        app.ageTo = parseInt($(this).val());
+    });
+
+    af.change(function () {
+        app.ageFrom = parseInt($(this).val());
+        at.empty();
+
+        at.append($('<option>', {
+            'value': 0,
+            'text': '-- До --'
+        }));
+
+        for (var i = app.ageFrom; i <= 80; ++i) {
+            at.append($('<option>', {
+                'value': i,
+                'text': 'до ' + i
+            }));
+        }
+    });
+
+    for (var i = 14; i <= 80; ++i) {
+        af.append($('<option>', {
+            'value': i,
+            'text': 'от ' + i
+        }));
+
+        at.append($('<option>', {
+            'value': i,
+            'text': 'до ' + i
+        }));
+    }
+
+    $(".radio-row").click(function () {
+        var div = $(this);
+        var i = div.find("i");
+        if (i.prop('class') == 'icon-check-empty') {
+            $('.radio-row i').prop('class', 'icon-check-empty');
+            i.prop('class', 'icon-check');
+            app.sex = parseInt(div.prop('id')[1]);
+        } else {
+            i.prop('class', 'icon-check-empty');
+            app.sex = 0;
+        }
+    });
 
     $("#start").click(function () {
         $.post(
@@ -276,8 +386,8 @@ $(document).ready(function () {
                     runProgressCheckerForGroupParsing();
                     var rb = $("#results-box");
                     rb.html('');
-                    rb.append('<p>Получение списка участников сообщества</p>');
-                    rb.append('<img src="/static/img/ajax-loader.gif" alt="" id="progress"/>');
+                    rb.append('<p><i id="icon1" class="icon-check-empty"></i>&nbsp&nbspПолучение списка участников сообщества</p>');
+                    rb.append('<img src="/static/img/ajax-loader.gif" alt="" id="img-wait"/>');
                     return;
                 }
                 alert('Bad request');
@@ -376,8 +486,7 @@ $(document).ready(function () {
 
     $('#group_name').keyup(groupKeyUp).keydown(groupKeyDown);
 
-})
-;
+});
 
 function groupKeyDown() {
     clearTimeout(app.timer);
@@ -406,14 +515,14 @@ function getGroups() {
         },
 
         function (data) {
-            var outerDiv = $('#groups-list');
+            var outerDiv = $('#list');
 
             if (outerDiv.length) {
                 outerDiv.html('');
             }
             else {
                 outerDiv = $('<div>', {
-                    'id': 'groups-list'
+                    'id': 'list'
                 });
             }
 
@@ -430,7 +539,9 @@ function getGroups() {
                 innerDiv.append(
                     $('<img>', {
                         'alt': 'Image',
-                        'src': group['photo_50']
+                        'src': group['photo_100'],
+                        'width': 70,
+                        'height': 70
                     })
                 );
 
@@ -448,7 +559,7 @@ function getGroups() {
                 $("#group_name").val($(this).find(".name").text());
                 app.groupId = parseInt($(this).find("span").text());
                 $("#group_id").val($(this).find("span").text());
-                outerDiv.html('');
+                outerDiv.remove();
             });
         }
     );
@@ -477,20 +588,20 @@ function getCities() {
         'get_cities/',
         {
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
-            country: app.cityId,
+            country: app.countryId,
             query: query
         },
 
         function (data) {
             var props = ['title', 'area', 'region'];
 
-            var outerDiv = $('#cities-list');
+            var outerDiv = $('#list');
             if (outerDiv.length) {
                 outerDiv.html('');
             }
             else {
                 outerDiv = $('<div>', {
-                    'id': 'cities-list'
+                    'id': 'list'
                 });
             }
 
@@ -520,10 +631,11 @@ function getCities() {
 
             $("#city").parent().append(outerDiv);
 
-            $(".city-row").click(function () {
+            $(".city-row").click(function (event) {
                 $("#city_custom").val($(this).find(".title").text());
                 app.cityId = parseInt($(this).find("span").text());
-                outerDiv.html('');
+                outerDiv.remove();
+                event.stopPropagation();
             });
         }
     );
