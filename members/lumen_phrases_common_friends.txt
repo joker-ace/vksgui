@@ -1,67 +1,37 @@
-<div id="results-box">
+HTTP/1.1 302 Found
+Server: Apache
+Date: Mon, 22 Dec 2014 21:03:16 GMT
+Content-Type: text/html; charset=windows-1251
+Content-Length: 20
+Connection: keep-alive
+X-Powered-By: PHP/3.9966
+Pragma: no-cache
+Cache-control: no-store
+Location: https://login.vk.com/?act=grant_access&client_id=4687599&settings=0&redirect_uri=https%3A%2F%2Foauth.vk.com%2Fblank.html&response_type=token&direct_hash=d094f890df5602f8b4&token_type=0&v=5.27&state=&display=page&ip_h=404ad42bebf5252389&hash=916e7f03a9dd676bd8&https=1
+Content-Encoding: gzip
 
-        </div>
-        <div id="sidebar">
+HTTP/1.1 302 Found
+Server: Apache
+Date: Mon, 22 Dec 2014 21:03:16 GMT
+Content-Type: text/html; charset=windows-1251
+Content-Length: 20
+Connection: keep-alive
+X-Powered-By: PHP/3.9966
+Pragma: no-cache
+Cache-control: no-store
+P3P: CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"
+Location: https://oauth.vk.com/blank.html#access_token=891f620198418d82433d1d237b16b6fcbd284becaea0edd82c7ee5bd4cf8b06c02fc0e72b9335ae9332d9&expires_in=86400&user_id=15188859
+Content-Encoding: gzip
 
-            <ul class="tabs left" style="margin: 0 0 -1px 0">
-                <li><a href="#tabr1"><i class="icon-search"></i>Общий поиск</a></li>
-                <li><a href="#tabr2"><i class="icon-group"></i>Поиск групп</a></li>
-            </ul>
+HTTP/1.1 200 OK
+Server: Apache
+Date: Mon, 22 Dec 2014 21:03:17 GMT
+Content-Type: text/html
+Content-Length: 474
+Last-Modified: Tue, 03 Jun 2014 13:35:25 GMT
+Connection: keep-alive
+ETag: "538dcf1d-1da"
+Expires: Mon, 22 Dec 2014 22:03:17 GMT
+Cache-Control: max-age=3600
+Accept-Ranges: bytes
 
-            <div id="tabr1" class="tab-content" style="min-height: 410px; height: 100%;">
-                <form action="" method="post" style="height: 100%">
-                    <div class="filter-row">
-                        <label for="country">Country</label>
-                        <select id="country">
-                            <option value="0" selected="selected">Select
-                                country
-                            </option>
-                            {% for k, v in countries.items %}
-                                <option value="{{ k }}">{{ v }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="filter-row">
-                        <label for="city">City</label>
-                        <select id="city"></select>
-                    </div>
-                    {% csrf_token %}
-                </form>
-            </div>
-
-            <div id="tabr2" class="tab-content" style="height: 100%; min-height: 410px;">
-                <form action="" method="post">
-                    <div class="filter-row">
-                        <label for="group_type">Тип группы</label>
-                        <select id="group_type">
-                            <option value="" selected="selected">-- Выберите тип группы --</option>
-                            <option value="group">Группа</option>
-                            <option value="page">Страница</option>
-                            <option value="event">Событие</option>
-                        </select>
-                    </div>
-                    <div class="filter-row">
-                        <label for="group_name">Название группы</label>
-                        <input type="text" name="group_name" id="group_name" value=""/>
-                    </div>
-
-                    <div class="filter-row">
-                        <label>или</label>
-                        <br/>
-                    </div>
-
-                    <div class="filter-row">
-                        <label for="group_id">Идентификатор или короткое имя</label>
-                        <input type="text" name="group_id" id="group_id"
-                               value=""/>
-                    </div>
-
-                    <div class="filter-row">
-                        <input type="button" id="start" name="start" value="Начать"/>
-                    </div>
-
-                </form>
-            </div>
-
-        </div>

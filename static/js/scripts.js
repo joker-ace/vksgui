@@ -3,8 +3,8 @@
 var app = {
     timer: 0,
     doneTypingInterval: 1000,
-    countryId: 0,
-    cityId: 0,
+    countryId: null,
+    cityId: null,
     groupId: 0,
     taskId: 0,
     parsedFriends: 0,
@@ -12,7 +12,10 @@ var app = {
         cities: false,
         countries: false,
         groups: false
-    }
+    },
+    sex: 0,
+    ageFrom: null,
+    ageTo: null
 };
 
 function sendNotifications(ids) {
@@ -35,9 +38,10 @@ function getAttackResults() {
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
         },
         function (targets) {
+            var rb = $("#results-box");
 
             if (targets.length == 0) {
-                $("#results-box").append('<p>Не найдено целей для выбраного сообщества</p>');
+                rb.append('<p>Не найдено целей для выбраного сообщества</p>');
                 return;
             }
 
@@ -46,7 +50,8 @@ function getAttackResults() {
                 'id': 'targets'
             });
 
-            targets.forEach(function (t) {
+            targets.forEach(function (t, i) {
+
                 var tb = $('<div>', {
                     'class': 'target-block'
                 });
@@ -100,15 +105,21 @@ function getAttackResults() {
                 ));
                 div.append(tb);
             });
-            var rb = $("#results-box");
+
+            rb.append($('<p>', {
+                'html': 'Ведущие аккаунты группы <span id="group-name">' + targets[0]['group_name'] + '</span>'
+            }).prepend($('<i>', {'class': 'icon-key', 'style': 'color:rgb(14, 149, 12)'}).html('&nbsp;')));
+
             rb.append($('<button>', {
                 'text': "Оповестить выбранных",
-                'id': 'send-notification'
+                'id': 'send-notification',
+                'class': 'square small mgl10'
             }));
 
             rb.append($('<button>', {
                 'text': "Оповестить всех",
-                'id': 'send-notification-to-all'
+                'id': 'send-notification-to-all',
+                'class': 'square small mgl10'
             }));
 
             $("#send-notification-to-all").click(function () {
@@ -212,7 +223,6 @@ function runProgressCheckerForRelationsSearch() {
                         clearInterval(app.intervalId);
                         $("#progressbar").remove();
                         $("#icon3").prop('class', 'icon-check').css('color', '#0E950C');
-                        var rb = $("#results-box");
                         runPercolationAttack();
                     } else {
                         app.parsedRelations = data['parsed'];
@@ -374,7 +384,23 @@ $(document).ready(function () {
         }
     });
 
-    $("#start").click(function () {
+    $("#start-search-attack").click(function () {
+        $.post(
+            'run_search_parser/',
+            {
+                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
+                country_id: app.countryId,
+                city_id: app.cityId,
+                age_from: app.ageFrom,
+                age_to: app.ageTo,
+                sex: app.sex
+            }, function (data) {
+                console.log(data);
+            }
+        );
+    });
+
+    $("#start-group-attack").click(function () {
         $.post(
             'run_group_parser/',
             {
@@ -393,6 +419,7 @@ $(document).ready(function () {
                 alert('Bad request');
             }
         );
+        return false;
     });
 
     // countries list changed handler

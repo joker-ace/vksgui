@@ -4,7 +4,7 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.ico' %}" />
     <link href="{% static 'css/kickstart.css' %}" rel="stylesheet"/>
     <link href="{% static 'css/styles.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
@@ -64,7 +64,10 @@
                         <label for="sex">Пол</label>
                         <div class="radio-row" id="_1"><i class="icon-check-empty"></i>Женский</div>
                         <div class="radio-row" id="_2"><i class="icon-check-empty"></i>Мужской</div>
-                        <div class="radio-row" id="_0"><i class="icon-check-empty"></i>Любой</div>
+                        <div class="radio-row" id="_0"><i class="icon-check"></i>Любой</div>
+                    </div>
+                    <div class="filter-row">
+                        <button id="start-search-attack" class="square full-width">Начать</button>
                     </div>
 
                     {% csrf_token %}
@@ -84,7 +87,7 @@
                     </div>
                     <div class="filter-row">
                         <label for="group_name">Название группы</label>
-                        <input type="text" name="group_name" id="group_name" value=""/>
+                        <input type="text" name="group_name" id="group_name" value="" class="square"/>
                     </div>
 
                     <div class="filter-row">
@@ -95,11 +98,11 @@
                     <div class="filter-row">
                         <label for="group_id">Идентификатор или короткое имя</label>
                         <input type="text" name="group_id" id="group_id"
-                               value=""/>
+                               value="" class="square" />
                     </div>
 
                     <div class="filter-row">
-                        <input type="button" id="start" name="start" value="Начать"/>
+                        <button id="start-group-attack" class="square full-width">Начать</button>
                     </div>
 
                 </form>

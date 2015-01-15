@@ -31,7 +31,7 @@ class Index(View):
         :param request:
         :return:
         """
-        request.session['access_token'] = get_access_token()
+        get_access_token(request.session)
         countries = {
             '1': 'Россия',
             '2': 'Украина'
@@ -101,6 +101,47 @@ def get_cities_by_query(request):
     return json_response(items)
 
 
+def run_search_parser(request):
+    """
+
+    :param request:
+    :return:
+    """
+    data = {
+        'v': settings.API_VERSION,
+        'access_token': request.session.get('access_token'),
+        'count': 1000,
+        'fields': 'photo_100'
+    }
+
+    country = request.POST.get('country_id')
+    if country:
+        data['country'] = country
+
+    city = request.POST.get('city_id')
+    if city:
+        data['city'] = city
+
+    sex = request.POST.get('sex')
+    if sex:
+        data['sex'] = sex
+
+    age_from = request.POST.get('age_from')
+    if age_from:
+        data['age_from'] = age_from
+
+    age_to = request.POST.get('age_to')
+    if age_to:
+        data['age_to'] = age_to
+
+    print data
+
+    r = requests.post(url=settings.SEARCH_URL, data=data)
+    response = r.json()[u'response']
+
+    return json_response(response)
+
+
 def run_group_parser(request):
     """
 
@@ -143,7 +184,8 @@ def get_group_members_count(request):
     tid = request.session.get('tid')
     if tid:
         count = app.AsyncResult(tid).get()
-        request.session['tid'] = sna.tasks.parse_group_members_friends.delay(request.session['gid'], request.session.get('access_token')).id
+        request.session['tid'] = sna.tasks.parse_group_members_friends.delay(request.session['gid'],
+                                                                             request.session.get('access_token')).id
         return json_response(count)
     return json_response(-1)
 
@@ -243,7 +285,18 @@ def get_attack_results(request):
 
     r = requests.post(settings.GET_USER_URL, data=data)
     response = r.json()
+
+    data = {
+        'v': settings.API_VERSION,
+        'group_id': request.session.get('gid'),
+        'access_token': request.session.get('access_token')
+    }
+
+    rsp = requests.post(settings.GET_GROUP_INFO_URL, data=data).json()
+
+
     if u'response' in response:
+        response[u'response'][0]['group_name'] = rsp[u'response'][0]['name']
         return json_response(response[u'response'])
 
     return json_response(None)
@@ -261,7 +314,7 @@ def send_notification(request):
     ids = request.POST.get('ids')
     rd = settings.REQUEST_DATA.copy()
     rd['user_ids'] = ids
-    rd['message'] = str(datetime.now()) + "\nТест для отправки сообщений"
+    rd['message'] = str(datetime.now())[:-7] + "\nТест для отправки сообщений"
     rd['access_token'] = request.session.get('access_token')
     requests.post(settings.SEND_MESSAGE_URL, data=rd)
     return json_response(1)

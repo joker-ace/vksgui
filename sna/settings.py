@@ -118,6 +118,7 @@ SEARCH_URL = VK_API_HOST + 'users.search'
 GET_GROUP_MEMBERS_URL = VK_API_HOST + 'groups.getMembers'
 GET_CITIES_URL = VK_API_HOST + 'database.getCities'
 GET_GROUPS_URL = VK_API_HOST + 'groups.search'
+GET_GROUP_INFO_URL = VK_API_HOST + 'groups.getById'
 GET_FRIENDS_OF_USER_URL = VK_API_HOST + 'friends.get'
 EXECUTE_URL = VK_API_HOST + 'execute'
 SEND_MESSAGE_URL = VK_API_HOST + 'messages.send'
@@ -132,3 +133,5 @@ API_VERSION = '5.27'
 REQUEST_DATA = {
     'v': API_VERSION
 }
+
+GRAB_COOKIES_FILE = os.path.join(BASE_DIR, 'vk_cookies.txt')

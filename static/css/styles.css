@@ -13,7 +13,7 @@ html, body {
 
 input[type="text"]:focus, textarea:focus, button:focus,
 a.button:focus, select:focus, input[type="file"]:focus,
-input[type="password"]:focus {
+input[type="password"]:focus, input[type="button"]:focus {
     -webkit-box-shadow: 0 0 7px #79c86e;
     -moz-box-shadow: 0 0 7px #79c86e;
     box-shadow: 0 0 7px #79c86e;
@@ -48,7 +48,7 @@ input[type="password"]:focus {
     min-height: 100%;
 }
 
-#results-box > p, button {
+#results-box > p {
     margin-left: 10px;
 }
 
@@ -80,6 +80,14 @@ input[type="password"]:focus {
 
 .target-name {
     text-align: center;
+}
+
+.target-name a {
+    text-decoration: none;
+}
+
+.target-name a:hover {
+    text-decoration: underline;
 }
 
 .ch-t {
@@ -216,4 +224,12 @@ input[type="password"]:focus {
     bottom: 0;
     background: url(../img/footer-bg.png);
     color: #81CF50;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.mgl10{
+    margin-left: 10px;
 }
