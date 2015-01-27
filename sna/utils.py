@@ -37,8 +37,7 @@ def get_access_token(session):
         date_format = '%Y-%m-%d %H:%M:%S'
         token_valid_date = datetime.datetime.strptime(end_time, date_format)
         now = datetime.datetime.now()
-        seconds = (token_valid_date - now).seconds
-        if seconds > 0:
+        if token_valid_date > now:
             return
 
     need_auth = False

@@ -107,7 +107,7 @@ function getAttackResults() {
             });
 
             rb.append($('<p>', {
-                'html': 'Ведущие аккаунты группы <span id="group-name">' + targets[0]['group_name'] + '</span>'
+                'html': 'Ведущие аккаунты группы <span id="group-name">' + targets[0]['group_name'] + ' ('+targets.length+')</span>'
             }).prepend($('<i>', {'class': 'icon-key', 'style': 'color:rgb(14, 149, 12)'}).html('&nbsp;')));
 
             rb.append($('<button>', {

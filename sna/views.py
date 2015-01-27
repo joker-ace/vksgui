@@ -6,6 +6,7 @@ This module contains views
 
 from datetime import datetime
 import os
+from copy import deepcopy
 
 import requests
 from django.views.generic import View
@@ -280,7 +281,9 @@ def get_attack_results(request):
         'v': settings.API_VERSION,
         'access_token': request.session.get('access_token'),
         'user_ids': ids,
-        'fields': 'photo_100,can_write_private_message'
+        'fields': 'photo_100,can_write_private_message,bdate,maiden_name,'
+                  'can_post,about,wall_comments,'
+                  'connections,relation,relatives,contacts'
     }
 
     r = requests.post(settings.GET_USER_URL, data=data)
@@ -294,10 +297,15 @@ def get_attack_results(request):
 
     rsp = requests.post(settings.GET_GROUP_INFO_URL, data=data).json()
 
-
     if u'response' in response:
         response[u'response'][0]['group_name'] = rsp[u'response'][0]['name']
-        return json_response(response[u'response'])
+        rsp = deepcopy(response[u'response'])
+        client = MongoClient()
+        db = client[gid]
+        targets = db['targets']
+        targets.remove()
+        targets.insert(response[u'response'])
+        return json_response(rsp)
 
     return json_response(None)
 
@@ -317,4 +325,47 @@ def send_notification(request):
     rd['message'] = str(datetime.now())[:-7] + "\nТест для отправки сообщений"
     rd['access_token'] = request.session.get('access_token')
     requests.post(settings.SEND_MESSAGE_URL, data=rd)
+
+    del rd['user_ids']
+
+    gid = request.session.get('gid')
+    ids = map(int, ids.split(','))
+    client = MongoClient()
+    db = client[gid]
+    targets_c = db['targets']
+
+    targets = targets_c.find({"id": {"$in": ids}})
+    for t in targets:
+        rd['message'] = str(datetime.now())[:-7] + "\n" + get_recommendations(t)
+        rd['user_id'] = t['id']
+        requests.post(settings.SEND_MESSAGE_URL, data=rd)
+
     return json_response(1)
+
+
+def get_recommendations(user):
+    """
+
+    :param user:
+    :return:
+    """
+    recommendation = "Мы рекомендуем:\n"
+    rn = 0
+
+    if u'wall_comments' in user and user[u'wall_comments']:
+        rn += 1
+        recommendation += str(rn) + ". Отключите возможность оставлять комментарии на вашей стене\n"
+
+    if u'can_post' in user and user['can_post'] == 1:
+        rn += 1
+        recommendation += str(rn) + ". Отключите возможность оставлять записи на стене другим пользователям\n"
+
+    if u'home_phone' in user and user[u'home_phone']:
+        rn += 1
+        recommendation += str(rn) + ". Скройте номер вашего домашнего телефона\n"
+
+    if u'mobile_phone' in user and user[u'mobile_phone']:
+        rn += 1
+        recommendation += str(rn) + ". Скройте номер вашего мобильного телефона\n"
+
+    return recommendation
