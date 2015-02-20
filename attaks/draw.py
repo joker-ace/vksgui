@@ -1,4 +1,5 @@
-__author__ = 'samorodok'
+# coding=utf-8
+
 import numpy as np
 import networkx as nx
 
@@ -63,7 +64,7 @@ def animation(graph, xyz, scalars, dirr):
 
 def draw2D(G):
     plt.figure(figsize=(10, 10))
-    pos = nx.pygraphviz_layout()
+    pos = nx.pygraphviz_layout(G)
     nx.draw_networkx(G, pos=pos, with_labels=False, node_color='g',
                      node_size=100, alpha=0.5, width=0.7, edge_color='grey')
     plt.show()

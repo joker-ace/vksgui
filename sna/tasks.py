@@ -176,6 +176,7 @@ def printTargets(percTreshold, listOfTargets, gid):
             fdWrite.write("{}\n".format(listOfTargets[i]))
             i += 1
 
+
 @app.task
 def start_percolation_attack(gid):
     """
@@ -185,6 +186,11 @@ def start_percolation_attack(gid):
     """
     path = os.path.join(settings.MEMBERS_FILES_DIR, '{}_common_friends.txt'.format(gid))
     graph = nx.read_adjlist(path, delimiter=' ')
+    try:
+        print len(graph), nx.degree_pearson_correlation_coefficient(graph), nx.average_clustering(graph), nx.diameter(
+            graph)
+    except:
+        pass
     attack(graph, 'target')
     results = attack(graph, 'target')
     printTargets(results[1], results[6], gid)

@@ -33,13 +33,11 @@ class Index(View):
         :return:
         """
         get_access_token(request.session)
-        countries = {
-            '1': 'Россия',
-            '2': 'Украина'
-        }
 
-        return render_to_response(self.template_name, {"countries": countries},
-                                  RequestContext(request))
+
+        return render_to_response(
+            self.template_name, {}, RequestContext(request)
+        )
 
 
 def get_groups_by_query(request):

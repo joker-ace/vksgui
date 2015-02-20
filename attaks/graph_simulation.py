@@ -9,7 +9,8 @@ graph = nx.read_adjlist('../members/lumen_phrases_common_friends.txt',
                         delimiter=' ')  #read matrix from file and create the graph
 
 # draw2D(graph)
-#print len(graph), nx.degree_pearson_correlation_coefficient(graph), nx.average_clustering(graph)#, nx.diameter(graph)#print info about the graph
+#print len(graph), nx.degree_pearson_correlation_coefficient(graph), nx.average_clustering(graph), nx.diameter(
+#    graph)  # print info about the graph
 #getPartitions(graph)
 #edgesInCommunitiesGraph('ektor.txt','partitions.txt')
 #G = nx.read_adjlist('adj_list.txt', delimiter=' ')

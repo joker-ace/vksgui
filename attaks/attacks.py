@@ -57,6 +57,8 @@ def attack(G, type=None):
 
 
 def get_percolation_threshold(largestComponent):
-    diffs = [largestComponent[i] - largestComponent[i + 1] for i in
-             xrange(len(largestComponent) - 1)]  # list of differences between two neighbors(components)
+    diffs = [
+        largestComponent[i] - largestComponent[i + 1]
+        for i in xrange(len(largestComponent) - 1)
+    ]  # list of differences between two neighbors(components)
     return diffs.index(max(diffs))  # return index of max difference
